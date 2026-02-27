@@ -1,0 +1,46 @@
+{
+  "plugins": {
+    "alipay": {
+      "name": "Payments.Alipay",
+      "displayName": "支付宝支付",
+      "description": "GrandNode 支付宝支付插件",
+      "version": "1.0.0",
+      "config": {
+        "appId": "",
+        "privateKey": "",
+        "alipayPublicKey": "",
+        "gateway": "https://openapi.alipay.com/gateway.do",
+        "signType": "RSA2",
+        "charset": "utf-8",
+        "notifyUrl": "/api/payment/alipay/notify",
+        "returnUrl": "/checkout/complete"
+      }
+    },
+    "wechatpay": {
+      "name": "Payments.WeChatPay",
+      "displayName": "微信支付",
+      "description": "GrandNode 微信支付插件（JSAPI/Native/H5）",
+      "version": "1.0.0",
+      "config": {
+        "appId": "",
+        "mchId": "",
+        "apiKey": "",
+        "apiV3Key": "",
+        "certPath": "",
+        "notifyUrl": "/api/payment/wechat/notify",
+        "tradeType": "NATIVE"
+      }
+    },
+    "cnShipping": {
+      "name": "Shipping.CN",
+      "displayName": "国内物流",
+      "description": "顺丰/圆通/中通/申通/韵达物流查询",
+      "version": "1.0.0",
+      "config": {
+        "kuaidi100Key": "",
+        "kuaidi100Customer": "",
+        "defaultCarrier": "SF"
+      }
+    }
+  }
+}
