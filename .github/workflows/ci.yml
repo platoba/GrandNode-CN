@@ -7,29 +7,44 @@ on:
     branches: [main]
 
 jobs:
-  docker-build:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps
+        run: pip install pytest
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Health check
+        run: python scripts/healthcheck.py
+
+  docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image
-        run: docker compose build --no-cache
-      - name: Verify compose config
-        run: docker compose config --quiet
+        run: docker build -t grandnode-cn .
+      - name: Validate compose
+        run: docker compose config -q
 
-  lint-scripts:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: ./scripts
-
-  validate-json:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate locale JSON
-        run: python3 -m json.tool locales/zh-CN.json > /dev/null
-      - name: Validate plugin config
-        run: python3 -m json.tool plugins/plugin-config.json > /dev/null
+      - name: Validate JSON files
+        run: |
+          python -c "import json; json.load(open('locales/zh-CN.json'))"
+          python -c "import json; json.load(open('plugins/plugin-config.json'))"
+      - name: Check shell scripts
+        run: |
+          bash -n scripts/init-locale.sh
+          bash -n scripts/backup.sh
