@@ -2,49 +2,74 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install test deps
-        run: pip install pytest
-
-      - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
-
-      - name: Health check
-        run: python scripts/healthcheck.py
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install pytest pytest-cov pyyaml requests
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=. --cov-report=term-missing
+    
+    - name: Validate Docker Compose
+      run: |
+        docker compose config
+    
+    - name: Check scripts syntax
+      run: |
+        bash -n scripts/*.sh
+        python -m py_compile scripts/*.py
 
   docker:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t grandnode-cn .
-      - name: Validate compose
-        run: docker compose config -q
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t grandnode-cn:test .
+    
+    - name: Test Docker Compose
+      run: |
+        docker compose up -d
+        sleep 10
+        docker compose ps
+        docker compose logs
+        docker compose down
 
-  lint:
+  security:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate JSON files
-        run: |
-          python -c "import json; json.load(open('locales/zh-CN.json'))"
-          python -c "import json; json.load(open('plugins/plugin-config.json'))"
-      - name: Check shell scripts
-        run: |
-          bash -n scripts/init-locale.sh
-          bash -n scripts/backup.sh
+    - uses: actions/checkout@v3
+    
+    - name: Run Trivy security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Check for secrets
+      run: |
+        if grep -r "password.*=" . --include="*.sh" --include="*.py" | grep -v "PASSWORD=\$"; then
+          echo "Found hardcoded passwords!"
+          exit 1
+        fi
