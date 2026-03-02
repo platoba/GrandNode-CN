@@ -203,3 +203,102 @@ docker compose logs mongodb | grep "slow query"
 
 查看 [CHANGELOG.md](CHANGELOG.md)
 
+
+## 营销自动化模块 🎯
+
+新增电商营销自动化工具，包含三大核心功能：
+
+### 1. 优惠券批量生成
+
+```bash
+# 生成100张10%折扣券，有效期30天
+python scripts/marketing_automation.py coupon \
+  --count 100 \
+  --discount 10 \
+  --type percentage \
+  --days 30 \
+  --output coupons.json
+
+# 生成固定金额优惠券（满200减50）
+python scripts/marketing_automation.py coupon \
+  --count 50 \
+  --discount 50 \
+  --type fixed \
+  --min-order 200 \
+  --output vip_coupons.json
+```
+
+### 2. 会员积分系统
+
+四级会员体系：
+- 🥉 青铜会员：1倍积分（0-999分）
+- 🥈 白银会员：1.2倍积分（1000-4999分）
+- 🥇 黄金会员：1.5倍积分（5000-9999分）
+- 💎 铂金会员：2倍积分（10000分以上）
+
+```bash
+# 计算订单积分
+python scripts/marketing_automation.py points \
+  --amount 500 \
+  --tier gold
+
+# 输出：
+# 订单金额: ¥500
+# 获得积分: 750
+# 当前等级: 黄金会员 (gold)
+# 距离 铂金会员 还需: 9250 积分
+```
+
+### 3. 邮件营销自动化
+
+三种预设模板：
+- **welcome**: 新用户欢迎邮件
+- **abandoned_cart**: 弃购挽回邮件
+- **reactivation**: 沉睡用户唤醒邮件
+
+```bash
+# 批量生成欢迎邮件
+python scripts/marketing_automation.py email \
+  --template welcome \
+  --customer customers.json \
+  --output welcome_emails.json
+```
+
+客户数据格式（`customers.json`）：
+```json
+[
+  {
+    "name": "张三",
+    "email": "zhangsan@example.com",
+    "coupon_code": "WELCOME10"
+  }
+]
+```
+
+### API 集成示例
+
+```python
+from scripts.marketing_automation import (
+    CouponGenerator,
+    LoyaltyPointsCalculator,
+    EmailCampaignAutomation
+)
+
+# 生成优惠券
+coupons = CouponGenerator.batch_generate(count=10, discount_value=15.0)
+
+# 计算积分
+points = LoyaltyPointsCalculator.calculate_order_points(order_amount=299, tier="silver")
+
+# 发送营销邮件
+email = EmailCampaignAutomation.generate_email(
+    template_type="welcome",
+    customer_data={"name": "李四", "email": "lisi@example.com", "coupon_code": "NEW20"}
+)
+```
+
+### 测试
+
+```bash
+pytest tests/test_marketing.py -v
+```
