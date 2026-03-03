@@ -2,7 +2,6 @@
 """Health check for GrandNode-CN deployment."""
 import json
 import sys
-import subprocess
 from pathlib import Path
 
 
